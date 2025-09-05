@@ -6,110 +6,171 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 
 
 
-/*/////////////// LOGIC ////////////////*/
+// Escape HTML
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/*/////////////// LOGIC ////////////////*/
+// Split text into words and spaces
+const splitWords = (text: string) => text.match(/\S+|\s+/g) || [];
 
+// Compare words: fuzzy matching
+const wordsAreSimilar = (a: string, b: string) => {
+  const lowerA = a.toLowerCase();
+  const lowerB = b.toLowerCase();
+  if (lowerA === lowerB) return true;
 
+  let matches = 0;
+  const minLen = Math.min(lowerA.length, lowerB.length);
+  for (let i = 0; i < minLen; i++) if (lowerA[i] === lowerB[i]) matches++;
+  return matches / Math.max(lowerA.length, lowerB.length) > 0.6;
+};
 
-export default function Home() {
+// Letter-level diff
+const diffLetters = (oldWord: string, newWord: string) => {
+  const n = oldWord.length, m = newWord.length;
+  const dp: number[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] =
+        oldWord[i].toLowerCase() === newWord[j].toLowerCase()
+          ? 1 + dp[i + 1][j + 1]
+          : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+
+  let i = 0, j = 0;
+  const oldResult: string[] = [], newResult: string[] = [];
+
+  while (i < n || j < m) {
+    if (i < n && j < m && oldWord[i].toLowerCase() === newWord[j].toLowerCase()) {
+      if (oldWord[i] === newWord[j]) {
+        oldResult.push(escapeHtml(oldWord[i]));
+        newResult.push(escapeHtml(newWord[j]));
+      } else {
+        oldResult.push(`<span class="text-red-500">${escapeHtml(oldWord[i])}</span>`);
+        newResult.push(`<span class="text-green-500">${escapeHtml(newWord[j])}</span>`);
+      }
+      i++; j++;
+    } else if (j < m && (i === n || dp[i][j + 1] >= dp[i + 1][j])) {
+      newResult.push(`<span class="text-green-500">${escapeHtml(newWord[j])}</span>`);
+      j++;
+    } else if (i < n && (j === m || dp[i][j + 1] < dp[i + 1][j])) {
+      oldResult.push(`<span class="text-red-500">${escapeHtml(oldWord[i])}</span>`);
+      i++;
+    }
+  }
+
+  return [oldResult.join(""), newResult.join("")];
+};
+
+// Word-level diff
+const lcsWordDiff = (oldWords: string[], newWords: string[]) => {
+  const n = oldWords.length, m = newWords.length;
+  const dp: number[][] = Array.from({ length: n + 1 }, () => Array(m + 1).fill(0));
+
+  // Build LCS table
+  for (let i = n - 1; i >= 0; i--) {
+    for (let j = m - 1; j >= 0; j--) {
+      dp[i][j] = wordsAreSimilar(oldWords[i], newWords[j])
+        ? 1 + dp[i + 1][j + 1]
+        : Math.max(dp[i + 1][j], dp[i][j + 1]);
+    }
+  }
+
+  let i = 0, j = 0;
+  const oldResult: string[] = [], newResult: string[] = [];
+
+  while (i < n || j < m) {
+    if (i < n && j < m && wordsAreSimilar(oldWords[i], newWords[j])) {
+      if (oldWords[i] === newWords[j]) {
+        oldResult.push(escapeHtml(oldWords[i]));
+        newResult.push(escapeHtml(newWords[j]));
+      } else {
+        const [o, nn] = diffLetters(oldWords[i], newWords[j]);
+        oldResult.push(o);
+        newResult.push(nn);
+      }
+      i++; j++;
+    } else if (j < m && (i === n || dp[i][j + 1] >= dp[i + 1][j])) {
+      newResult.push(`<span class="text-green-500">${escapeHtml(newWords[j])}</span>`);
+      j++;
+    } else if (i < n && (j === m || dp[i][j + 1] < dp[i + 1][j])) {
+      oldResult.push(`<span class="text-red-500">${escapeHtml(oldWords[i])}</span>`);
+      i++;
+    }
+  }
+
+  return [oldResult.join(""), newResult.join("")];
+};
+
+const TextComparator: React.FC = () => {
+  const [oldText, setOldText] = useState("");
+  const [newText, setNewText] = useState("");
+  const [comparedOld, setComparedOld] = useState("");
+  const [comparedNew, setComparedNew] = useState("");
+  const [isCompared, setIsCompared] = useState(false);
+
+  const handleCompare = () => {
+    const [oldHtml, newHtml] = lcsWordDiff(splitWords(oldText), splitWords(newText));
+    setComparedOld(oldHtml.replace(/\n/g, "<br>"));
+    setComparedNew(newHtml.replace(/\n/g, "<br>"));
+    setIsCompared(true);
+  };
+
+  const handleReset = () => setIsCompared(false);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+      <div className="flex flex-col md:flex-row gap-6 w-full max-w-5xl">
+        {isCompared ? (
+          <div
+            className="flex-1 min-h-[250px] bg-gray-50 border border-gray-300 rounded-md p-4 text-black overflow-y-auto whitespace-pre-wrap break-words"
+            dangerouslySetInnerHTML={{ __html: comparedOld }}
+          />
+        ) : (
+          <textarea
+            value={oldText}
+            onChange={(e) => setOldText(e.target.value)}
+            placeholder="ძველი ტექსტი..."
+            className="flex-1 min-h-[250px] bg-gray-50 border border-gray-300 rounded-md p-4 text-black resize-none whitespace-pre-wrap break-words"
+          />
+        )}
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        {isCompared ? (
+          <div
+            className="flex-1 min-h-[250px] bg-gray-50 border border-gray-300 rounded-md p-4 text-black overflow-y-auto whitespace-pre-wrap break-words"
+            dangerouslySetInnerHTML={{ __html: comparedNew }}
+          />
+        ) : (
+          <textarea
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            placeholder="ახალი ტექსტი..."
+            className="flex-1 min-h-[250px] bg-gray-50 border border-gray-300 rounded-md p-4 text-black resize-none whitespace-pre-wrap break-words"
+          />
+        )}
+      </div>
+
+      <div className="mt-6 flex gap-4">
+        {!isCompared ? (
+          <button
+            onClick={handleCompare}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            შედარება
+          </button>
+        ) : (
+          <button
+            onClick={handleReset}
+            className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition"
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            ახალი შედარება
+          </button>
+        )}
+      </div>
     </div>
   );
-}
+};
+
+export default TextComparator;
