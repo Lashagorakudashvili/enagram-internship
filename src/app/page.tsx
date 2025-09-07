@@ -48,16 +48,17 @@ const renderExtraSpaces = (spaces: string, color: "red" | "green") => {
 
 
 // Split text into words and spaces
-const splitWords = (text: string) => text.match(/\S+|\s+/g) || [];
-// Split text into words and spaces
+const splitWords = (text: string) => {
+  const matches = text.match(/\s+|\S+/g) || [];
+  return matches.length ? matches : [text]; // if empty, return the text itself
+};
 
-
-// Compare words: fuzzy matching (ignore leading/trailing spaces for similarity)
+// Update wordsAreSimilar to treat pure space tokens separately
 const wordsAreSimilar = (a: string, b: string) => {
-  const trimA = a.trim();
-  const trimB = b.trim();
-  const lowerA = trimA.toLowerCase();
-  const lowerB = trimB.toLowerCase();
+  if (/^\s+$/.test(a) && /^\s+$/.test(b)) return true; // spaces match exactly
+  const lowerA = a.trim().toLowerCase();
+  const lowerB = b.trim().toLowerCase();
+  if (!lowerA && !lowerB) return true; // both empty after trim
   if (lowerA === lowerB) return true;
 
   let matches = 0;
@@ -265,32 +266,106 @@ const TextComparator: React.FC = () => {
 
 
   return (
-     <main className="bg-white text-black">
+     <main className="text-black">
      
-     
-      {/* //////////////////////////// */}
-      <section>
-
+      {/* mobile navbar */}
+      <section className="block md:hidden w-full h-[60px] bg-[#132450]">
+        <div className="container mx-auto h-full">
+          <div className="flex justify-between items-center h-full px-[20px]">
+            <div className="flex items-center gap-[10px]">
+              <Image
+                src="/logo.png"
+                alt="logo"
+                width={40}
+                height={42}
+              />
+              <span className="text-white text-[13px]">ENAGRAM</span>
+            </div>
+            <Image
+              src="/menu.png"
+              alt="menu"
+              width={24}
+              height={24}
+              className="h-[30px] w-[30px]"
+            />
+          </div>
+        </div>
       </section>
-      {/* //////////////////////////// */}
+      {/* mobile navbar */}
+
+
+
+
+
+
+
+
+
+
+      {/*//////////////////////////// pc menu/nav ////////////////////////////*/}
+      <section>
+        
+      </section>
+      {/*//////////////////////////// pc menu/nav ////////////////////////////*/}
+
+
+
+
+
+
+
 
 
 
       {/*////////////////////// Comparing text ///////////////////////*/}
-      <section className="container mx-auto flex flex-col items-center justify-center min-h-screen p-6">
+      <section className="container mx-auto flex flex-col items-center justify-center  p-6">
         {/* Top bar */}
-        <div className="w-full flex flex-wrap items-center justify-between mb-6 gap-4  md:-mt-[360px]">
+        <div className="w-full flex flex-wrap items-center justify-between mb-6 gap-4  ">
+
+          {/* spelling */}
+          <div className="block md:hidden container">
+            <div className="flex items-center">
+              <Image
+                src="/Spelling.png"
+                alt="Spelling"
+                width={24}
+                height={24}
+                className="h-[24px] w-[24px]"
+              />
+              <div className="relative inline-block">
+                <div className="flex items-center justify-between px-[5px] py-[3px]  border border-gray-400 rounded-md bg-white text-black w-40">
+                  Dropdown Text
+                  <svg
+                    className="w-4 h-4 ml-2 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* spelling */}
+
+
           {/* Left side: dropdown + checkbox */}
           <div className="flex items-center gap-4 flex-wrap relative">
             {/* Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setOpen(!open)}
-                className="flex items-center gap-2 px-4 py-2 border-none rounded-md bg-white text-black flex-shrink-0"
+                className="hover:cursor-pointer group flex items-center gap-2 px-4 py-2 border border-gray-500 rounded-md bg-white text-black flex-shrink-0 hover:border-gray-700 hover:text-gray-800 transition"
               >
                 {selected}
                 <svg
-                  className="w-4 h-4"
+                  className="w-4 h-4 text-black group-hover:text-gray-800 transition"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -304,17 +379,14 @@ const TextComparator: React.FC = () => {
                 </svg>
               </button>
 
+
               {/* Dropdown menu */}
               {open && (
-                <ul className="absolute left-0 mt-1 w-full bg-white border rounded-md shadow-md z-10 overflow-hidden">
+                <ul className="absolute left-0 mt-1 w-full bg-white border border-gray-500 rounded-md shadow-md z-10 overflow-hidden">
                   {options.map((option, index) => (
                     <li
                       key={option}
-                      onClick={() => {
-                        setSelected(option);
-                        setOpen(false);
-                      }}
-                      className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
+                      className={`px-4 py-2 select-none hover:cursor-pointer hover:bg-gray-100 hover:text-gray-800 transition ${
                         index === 0 ? "rounded-t-md" : ""
                       } ${index === options.length - 1 ? "rounded-b-md" : ""}`}
                     >
@@ -323,70 +395,110 @@ const TextComparator: React.FC = () => {
                   ))}
                 </ul>
               )}
+              {/* Dropdown menu */}
             </div>
+            {/* Dropdown */}
 
             {/* Checkbox with label */}
-            <label className="flex items-center gap-2 text-black flex-shrink-0">
-              <input type="checkbox" className="w-4 h-4" />
+            <label className="flex items-center gap-2 text-black flex-shrink-0 hover:cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 accent-blue-600 hover:cursor-pointer" />
               ფორმატის შენარჩუნება
             </label>
+            {/* Checkbox with label */}
           </div>
+          {/* Left side: dropdown + checkbox */}
 
           {/* Right side: button */}
-          <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition flex-shrink-0">
-            ახლის გახსნა 
+          <button className="hover:cursor-pointer w-full md:w-auto px-4 py-2 bg-[#383A4899] text-white rounded-md hover:bg-[#20212999] transition flex-shrink-0 flex items-center justify-center gap-2">
+            <Image
+              src="/plus.png"
+              alt="plus"
+              width={24}
+              height={24}
+              className="h-[24px] w-[24px]"
+            />
+            ახლის გახსნა
           </button>
+          {/* Right side: button */}
         </div>
+        {/* Top bar */}
+
 
         {/* Textareas / comparison divs */}
         <div className="flex flex-col md:flex-row gap-6 w-full justify-center mt-[20px]">
+          {/* Left box / textarea */}
           {isCompared ? (
             <div
-              className="flex-1 h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
+              className="flex-1 min-h-[190px] md:h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
               dangerouslySetInnerHTML={{ __html: comparedOld }}
             />
           ) : (
             <textarea
               value={oldText}
               onChange={(e) => setOldText(e.target.value)}
-              placeholder="ძველი ტექსტი..."
-              className="flex-1 h-[432px] border rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words"
+              placeholder="დაიწყე წერა..."
+              className="flex-1 min-h-[190px] md:h-[432px] border border-gray-500 rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words focus:border-blue-600 focus:outline-none"
             />
           )}
+          {/* Left box / textarea */}
 
+          {/* Arrow in middle */}
+          <div className="self-stretch flex items-center justify-center">
+            <Image
+              src="/Arrows.png"
+              alt="Arrows"
+              width={32}
+              height={32}
+              className="h-[32px] w-[32px] transform md:rotate-90"
+            />
+          </div>
+          {/* Arrow in middle */}
+
+          {/* Right box / textarea */}
           {isCompared ? (
             <div
-              className="flex-1 h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
+              className="flex-1 min-h-[190px] md:h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
               dangerouslySetInnerHTML={{ __html: comparedNew }}
             />
           ) : (
             <textarea
               value={newText}
               onChange={(e) => setNewText(e.target.value)}
-              placeholder="ახალი ტექსტი..."
-              className="flex-1 h-[432px] border rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words"
+              placeholder="დაიწყე წერა..."
+              className="flex-1 min-h-[190px] md:h-[432px] border border-gray-500 rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words focus:border-blue-600 focus:outline-none"
             />
           )}
+          {/* Right box / textarea */}
         </div>
+        {/* Textareas / comparison divs */}
+
 
         {/* Action buttons */}
         <div className="mt-6 flex gap-4">
           {!isCompared ? (
             <button
               onClick={handleCompare}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+              className="hover:cursor-pointer px-6 py-2 bg-[#4571E4] text-white rounded-md hover:bg-blue-700 transition"
             >
               შედარება
             </button>
           ) : (
             <button
               onClick={handleReset}
-              className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition"
+              className="hover:cursor-pointer flex items-center gap-2 px-6 py-2 bg-[#4571E4] text-white rounded-md hover:bg-blue-700 transition"
             >
-              ახალი შედარება
+              <Image
+                src="/reload.png"
+                alt="reload"
+                width={20}
+                height={20}
+                className="h-[20px] w-[20px]"
+              />
+              შედარება
             </button>
           )}
         </div>
+        {/* Action buttons */}
       </section>
       {/*////////////////////// Comparing text ///////////////////////*/}
 
