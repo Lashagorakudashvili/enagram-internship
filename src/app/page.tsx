@@ -246,28 +246,63 @@ const TextComparator: React.FC = () => {
   const [isCompared, setIsCompared] = useState(false);
 
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState("ქართული");
-
+  const [selected] = useState("ქართული");
   const options = ["ქართული", "English", "German"];
 
-  const handleCompare = () => {
-    const [oldHtml, newHtml] = lcsWordDiff(
-      splitWords(oldText),
-      splitWords(newText)
-    );
-    setComparedOld(oldHtml.replace(/\n/g, "<br>"));
-    setComparedNew(newHtml.replace(/\n/g, "<br>"));
-    setIsCompared(true);
-  };
+  // loading state
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
 
-  const handleReset = () => setIsCompared(false);
+  // progress bar
+  useEffect(() => {
+  if (!loading) return;
+
+  setProgress(0); // reset once at start
+
+  const totalDuration = 3000; // 3 seconds
+  const intervalDelay = 50; // 50ms per step
+  const steps = totalDuration / intervalDelay; // 60 steps
+  const increment = 100 / steps; // ≈1.667 per step
+
+  const interval = setInterval(() => {
+    setProgress((p) => {
+      const next = p + increment;
+      if (next >= 100) {
+        clearInterval(interval);
+        setProgress(100); // ensure exactly 100%
+        setLoading(false);
+        handleCompareReal();
+        return 100;
+      }
+      return next;
+    });
+  }, intervalDelay);
+
+  return () => clearInterval(interval);
+  }, [loading]);
+  // progress bar
+
+  const handleCompareReal = () => {
+  const [oldHtml, newHtml] = lcsWordDiff(
+    splitWords(oldText),
+    splitWords(newText)
+  );
+  setComparedOld(oldHtml.replace(/\n/g, "<br>"));
+  setComparedNew(newHtml.replace(/\n/g, "<br>"));
+  setIsCompared(true);
+};
+
+const handleCompare = () => {
+  setLoading(true);
+};
+
+const handleReset = () => setIsCompared(false);
 /* states */
 
 
 
   return (
-     <main className="text-black">
-     
+     <main className="text-black md:flex">
       {/* mobile navbar */}
       <section className="block md:hidden w-full h-[60px] bg-[#132450]">
         <div className="container mx-auto h-full">
@@ -294,31 +329,101 @@ const TextComparator: React.FC = () => {
       {/* mobile navbar */}
 
 
+      {/* pc menu/nav */}
+      <section className="hidden md:flex flex-col justify-between bg-[#132450] w-[240px] h-screen p-4 text-white">
+        {/* Top Section */}
+        <div>
+          {/* Arrow */}
+          <div className="flex justify-end mb-8">
+            <Image
+              src="/arrow-left.png"
+              alt="arrow left"
+              width={20}
+              height={20}
+              className="h-[20px] w-[20px] hover:cursor-pointer"
+            />
+          </div>
+          {/* Arrow only at the top */}
 
+          {/* Logo + ENAGRAM */}
+          <div className="flex items-center gap-2 mb-10">
+            <Image
+              src="/logo.png"
+              alt="logo"
+              width={36}
+              height={36}
+              className="h-[36px] w-[36px] hover:cursor-pointer"
+            />
+            <span className="text-sm font-semibold">ENAGRAM</span>
+          </div>
+          {/* Logo + ENAGRAM */}
 
+          {/* Menu items */}
+          <nav className="flex flex-col gap-4">
+            {/* Item 1 */}
+            <div className="hover:cursor-pointer flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#1E3366] transition">
+              <Image src="/check.png" alt="check" width={20} height={20} />
+              <span className="text-sm">მართლმწერი</span>
+            </div>
+            {/* Item 1 */}
 
+            {/* Item 2 (active with white border indicator) */}
+            <div className="relative hover:cursor-pointer">
+              <div className="flex items-center gap-3 pl-[10px] pr-6 py-2 bg-white text-[#132450] rounded-l-full  w-[calc(100%+17px)]">
+                <Image src="/spelling.png" alt="spelling" width={20} height={20} />
+                <span className="text-sm font-semibold">ტექსტის შედარება</span>
+              </div>
+            </div>
+            {/* Item 2 (active with white border indicator) */}
 
+            {/* Item 3 */}
+            <div className="hover:cursor-pointer flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#1E3366] transition">
+              <Image src="/mic.png" alt="mic" width={20} height={20} />
+              <span className="text-sm">ხმა → ტექსტი</span>
+            </div>
+            {/* Item 3 */}
 
+            {/* Item 4 */}
+            <div className="hover:cursor-pointer flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#1E3366] transition">
+              <Image src="/sound-wave.png" alt="sound wave" width={20} height={20} />
+              <span className="text-sm">ტექსტი → ხმა</span>
+            </div>
+            {/* Item 4 */}
 
+            {/* Item 5 */}
+            <div className="hover:cursor-pointer flex items-center gap-3 px-3 py-2 rounded-md hover:bg-[#1E3366] transition">
+              <Image src="/news-paper.png" alt="news paper" width={20} height={20} />
+              <span className="text-sm">PDF კონვერტაცია</span>
+            </div>
+            {/* Item 5 */}
+          </nav>
+          {/* Menu items */}
+        </div>
+        {/* Top Section */}
 
-
-      {/*//////////////////////////// pc menu/nav ////////////////////////////*/}
-      <section>
-        
+        {/* Bottom Section */}
+        <div className="flex items-center justify-between border-t border-[#1E3366] pt-4">
+          {/* Circle with ლ */}
+          <div className="hover:cursor-pointer flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-[#1E3366] flex items-center justify-center text-white font-semibold">
+              ლ
+            </div>
+            <span className="text-sm">ლაშა გორაკუდაშვილი</span>
+          </div>
+          <Image
+            src="/three-dots.png"
+            alt="menu"
+            width={20}
+            height={20}
+            className="h-[20px] w-[20px] hover:cursor-pointer mt-[4px]"
+          />
+        </div>
       </section>
-      {/*//////////////////////////// pc menu/nav ////////////////////////////*/}
-
-
-
-
-
-
-
-
+      {/* pc menu/nav */}
 
 
       {/*////////////////////// Comparing text ///////////////////////*/}
-      <section className="container mx-auto flex flex-col items-center justify-center  p-6">
+      <section className="container mx-auto flex flex-col items-center p-6">
         {/* Top bar */}
         <div className="w-full flex flex-wrap items-center justify-between mb-6 gap-4  ">
 
@@ -409,10 +514,26 @@ const TextComparator: React.FC = () => {
           {/* Left side: dropdown + checkbox */}
 
           {/* Right side: button */}
-          <button className="hover:cursor-pointer w-full md:w-auto px-4 py-2 bg-[#383A4899] text-white rounded-md hover:bg-[#20212999] transition flex-shrink-0 flex items-center justify-center gap-2">
+          <button
+            onClick={() => {
+              if (!loading && (oldText || newText)) {
+                setOldText("");
+                setNewText("");
+                setIsCompared(false);
+                setComparedOld("");
+                setComparedNew("");
+              }
+            }}
+            disabled={loading || (!oldText && !newText)} // disable if loading or empty
+            className={`w-full md:w-auto px-4 py-2 text-white rounded-md transition flex-shrink-0 flex items-center justify-center gap-2
+              ${loading || (!oldText && !newText)
+                ? "bg-[#383A4899] cursor-not-allowed"
+                : "bg-[#4571E4] hover:bg-blue-700 hover:cursor-pointer"
+              }`}
+          >
             <Image
-              src="/plus.png"
-              alt="plus"
+              src="/Plus.png"
+              alt="Plus"
               width={24}
               height={24}
               className="h-[24px] w-[24px]"
@@ -425,50 +546,93 @@ const TextComparator: React.FC = () => {
 
 
         {/* Textareas / comparison divs */}
-        <div className="flex flex-col md:flex-row gap-6 w-full justify-center mt-[20px]">
-          {/* Left box / textarea */}
-          {isCompared ? (
-            <div
-              className="flex-1 min-h-[190px] md:h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
-              dangerouslySetInnerHTML={{ __html: comparedOld }}
-            />
-          ) : (
-            <textarea
-              value={oldText}
-              onChange={(e) => setOldText(e.target.value)}
-              placeholder="დაიწყე წერა..."
-              className="flex-1 min-h-[190px] md:h-[432px] border border-gray-500 rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words focus:border-blue-600 focus:outline-none"
-            />
-          )}
-          {/* Left box / textarea */}
+        <div className="relative w-full flex justify-center mt-[20px]">
+          {/* Textareas / comparison divs */}
+          <div className="flex flex-col md:flex-row gap-6 w-full">
+            {/* Left box / textarea */}
+            {isCompared ? (
+              <div
+                className="flex-1 min-h-[190px] md:h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
+                dangerouslySetInnerHTML={{ __html: comparedOld }}
+              />
+            ) : (
+              <textarea
+                value={oldText}
+                onChange={(e) => setOldText(e.target.value)}
+                placeholder="დაიწყე წერა..."
+                className="flex-1 min-h-[190px] md:h-[432px] border border-gray-500 rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words focus:border-blue-600 focus:outline-none"
+              />
+            )}
+            {/* Left box / textarea */}
 
-          {/* Arrow in middle */}
-          <div className="self-stretch flex items-center justify-center">
-            <Image
-              src="/Arrows.png"
-              alt="Arrows"
-              width={32}
-              height={32}
-              className="h-[32px] w-[32px] transform md:rotate-90"
-            />
+            {/* Arrow in middle */}
+            <div className="self-stretch flex items-center justify-center">
+              <Image
+                src="/Arrows.png"
+                alt="Arrows"
+                width={32}
+                height={32}
+                className="h-[32px] w-[32px] transform md:rotate-90"
+              />
+            </div>
+            {/* Arrow in middle */}
+
+            {/* Right box / textarea */}
+            {isCompared ? (
+              <div
+                className="flex-1 min-h-[190px] md:h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
+                dangerouslySetInnerHTML={{ __html: comparedNew }}
+              />
+            ) : (
+              <textarea
+                value={newText}
+                onChange={(e) => setNewText(e.target.value)}
+                placeholder="დაიწყე წერა..."
+                className="flex-1 min-h-[190px] md:h-[432px] border border-gray-500 rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words focus:border-blue-600 focus:outline-none"
+              />
+            )}
+            {/* Right box / textarea */}
           </div>
-          {/* Arrow in middle */}
 
-          {/* Right box / textarea */}
-          {isCompared ? (
-            <div
-              className="flex-1 min-h-[190px] md:h-[432px] border rounded-md p-4 bg-white text-black overflow-y-auto whitespace-pre-wrap break-words"
-              dangerouslySetInnerHTML={{ __html: comparedNew }}
-            />
-          ) : (
-            <textarea
-              value={newText}
-              onChange={(e) => setNewText(e.target.value)}
-              placeholder="დაიწყე წერა..."
-              className="flex-1 min-h-[190px] md:h-[432px] border border-gray-500 rounded-md p-4 bg-white text-black resize-none whitespace-pre-wrap break-words focus:border-blue-600 focus:outline-none"
-            />
+          {/* Loading overlay (covers only the textareas container) */}
+          {loading && (
+            <div className="absolute inset-0 bg-white bg-opacity-80 flex items-center justify-center z-10 p-4 md:p-6">
+              <div className="flex items-center gap-4 md:gap-6">
+                {/* Heartbeat circles */}
+                <div className="relative w-8 h-8 md:w-12 md:h-12 flex items-center justify-center">
+                  {/* Outer circle */}
+                  <div className="absolute w-full h-full border-2 border-blue-500 rounded-full animate-pulse-slow"></div>
+                  {/* Outer circle */}
+
+                  {/* Inner circle */}
+                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-blue-500 rounded-full animate-pulse-slow"></div>
+                  {/* Inner circle */}
+                </div>
+                {/* Heartbeat circles */}
+
+                {/* Text and progress */}
+                <div className="flex flex-col">
+                  <p className="text-gray-700 font-medium text-sm md:text-base">
+                    Converting... Thank you for your patience
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="font-semibold text-gray-700 text-xs md:text-sm">
+                      {Math.round(progress)}%
+                    </span>
+                    <div className="w-36 md:w-48 h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="bg-blue-500 h-3 transition-all duration-100"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+                {/* Text and progress */}
+              </div>
+            </div>
           )}
-          {/* Right box / textarea */}
+          {/* Loading overlay (covers only the textareas container) */}
         </div>
         {/* Textareas / comparison divs */}
 
@@ -478,14 +642,24 @@ const TextComparator: React.FC = () => {
           {!isCompared ? (
             <button
               onClick={handleCompare}
-              className="hover:cursor-pointer px-6 py-2 bg-[#4571E4] text-white rounded-md hover:bg-blue-700 transition"
+              disabled={loading || (!oldText && !newText)} // disable if loading or no text
+              className={`px-6 py-2 rounded-md text-white transition 
+                ${loading || (!oldText && !newText)
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#4571E4] hover:bg-blue-700 cursor-pointer"
+                }`}
             >
               შედარება
             </button>
           ) : (
             <button
               onClick={handleReset}
-              className="hover:cursor-pointer flex items-center gap-2 px-6 py-2 bg-[#4571E4] text-white rounded-md hover:bg-blue-700 transition"
+              disabled={loading || (!oldText && !newText)} // disable if loading or no text
+              className={`flex items-center gap-2 px-6 py-2 rounded-md text-white transition
+                ${loading || (!oldText && !newText)
+                  ? "bg-[#383A4899] cursor-not-allowed"
+                  : "bg-[#4571E4] hover:bg-blue-700 cursor-pointer"
+                }`}
             >
               <Image
                 src="/reload.png"
