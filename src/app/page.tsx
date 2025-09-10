@@ -451,7 +451,7 @@ const TextComparator: React.FC = () => {
                 className="h-[24px] w-[24px]"
               />
               <div className="relative inline-block">
-                <div className="flex items-center justify-between px-[5px] py-[3px] border border-gray-400 rounded-md bg-white text-black w-[175px]">
+                <div className="flex items-center justify-between px-[5px] py-[3px] border border-gray-400 rounded-md bg-white text-black w-[185px]">
                   ტექსტის შედარება
                   <svg
                     className="w-4 h-4 ml-0 text-gray-600"
